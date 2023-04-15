@@ -24,34 +24,27 @@ interface ITaikoBridgeContract {
     ) external returns (bool);
 }
 
-//@abstract contract @TODO
-abstract contract WrappedNFT{
-
-
-     function claimBridged(uint256 srcChainId,
+// Abstract contract, add appropriate functionality later
+abstract contract WrappedNFT {
+    function claimBridged(uint256 srcChainId,
         address app,
         bytes32 signal,
         bytes calldata proof
     ) public virtual returns (bool,address,address,uint);
 
-    function addSisterContract(address _newSisterContractOnOtherChain)public  virtual;
-
-
-
-    
-
-
+    function addSisterContract(address _newSisterContractOnOtherChain) public virtual;
 }
+
+// Contract for open access NFT bridge
 contract openAccessNFTBridge is Ownable, IERC721Receiver {
     using Counters for Counters.Counter;
 
     ITaikoBridgeContract taikoBridge;
 
-    //@notice we use two different starting points for either chain to prevent overlap.
+    // Use different starting points for each chain to prevent overlap
     Counters.Counter private _tokenIdCounter;
 
-    //@notice hardcoded for accessibility
-
+    // Define bridge and chain contracts and IDs
     address public taikoBridgeContract =
         0xbB203a6f73F805E44E97dcC0c894eFe0fAf72498; // SignalService Taiko
 
@@ -66,45 +59,15 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
 
     address public currentBridgeSignalContract;
 
-    //the bridgeContract on the other side of the aisle
+    // The bridge contract on the other side
     address public currentSisterContract;
 
     uint public currentChainId;
 
     uint public currentSisterChainId;
 
-    //@TODO (bad notes, deprecated. Wrote down the new approach)
-
-    //@notice
-
-    //@the NFT Contract itself has to send it here. (so the User has to Approve it first.)  It does need to implement the new interface (to be coded), specifically the data field.
-
-    //@notice the sister contract should implement a custom logic to enable a remint of the bridged over nft via the bool isSignalReceived. If its true, mint the bridged over asset.
-
-    //so onERC721 received, we get the encoded bytes data to forward, to who we have to send it, for what tokenId, and an optional bytes32 datafield.
-
-    //so L2 NFT Contract has to do:
-
-    //Get approved to send the NFT
-    //Send NFT + argument: bytes calldata data
-
-    // the argument bytes calldata data has to have:
-
-    //  uint: tokenId, address: origin(to prove their NFT Contract sent it), tokenURI?(no, the L1 Sister Contract has to know it on its own.)
-    //* perhaps optional address: NFTSisterContractOtherChain stored somewhere by the NFT Contract creator
-
-    // we transfer the data via the signalService, and encode the bytes argument to a bytes32 (padding?)
-
-    // on the other chain, the L1SisterNFT Contract needs to implement an interface:
-
-    // ping OUR bridge contract to ask if a specific tokenId, for a specific origin Address, has sucessfully bridged over
-    // OUR Bridge Contract flips a switch if the bool is returned as true to mark this bridgedNFT as claimed
-
-    // the SisterNFT Contract then has to implement their bridgedMint somehow with the tokenId from the other Chain and make a normal NFT Mint
-
-    // done.
-
-       constructor(
+    // Constructor function for the contract
+    constructor(
         uint _chainType,
         address _sisterContract
     ) {
@@ -126,22 +89,24 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
         }
     }
 
-
-    //ownerWhoSentTheNFT => NFT Contract => tokenId => Boolean (true if its being held)
+    // Mapping to store NFTs being held
     mapping(address => mapping(address => mapping(uint => bool))) heldNFT;
 
     mapping(address => address) public sisterContract;
 
+    // Add a new sister contract
     function addSisterContract(address _newSisterContract) external {
         sisterContract[msg.sender] = _newSisterContract;
     }
 
-    function addSisterContractViaSignature(address _newSisterContract, bytes memory _signature) external{
-        //@TODO for non upgradable NFT Contracts to be able to be L2 Bridge compliant
+    // Add a sister contract via signature
+    function addSisterContractViaSignature(address _newSisterContract, bytes memory _signature) external {
+        // TODO
+
+        // for non-upgradable NFT Contracts to be L2 Bridge compliant
     }
 
-
-    //@notice returns true or false if message received, the OG NFT Contract addr from the other chain,the owner of the NFT, the tokenId.
+    // Returns true or false if message received, the original NFT Contract address from the other chain, the owner of the NFT, and the tokenId
     function claimBridged(
         uint256 srcChainId,
         address _origin,
@@ -163,24 +128,16 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
             uint256 _nftId
         ) = decodeMessagePayload(_dataPayload);
 
-        //if we hold the NFT from a previous bridging, we give it back to the owner here.
-
-        // this requires the NFT Contract Owner to add the sisterContract to the mapping.
+        // If we hold the NFT from a previous bridging, we return it to the owner here.
         if (
             heldNFT[_addrOwner][sisterContract[_addrOriginNftContract]][_nftId]
         ) {
-            // Get the address of the sister contract
-            address sisterContractAddress = sisterContract[
-                _addrOriginNftContract
-            ];
-
-            // Create an instance of the ERC721 contract
+            address sisterContractAddress = sisterContract[_addrOriginNftContract];
 
             require(sisterContractAddress != address(0), "no sister contract specified!");
 
             IERC721 sisterNftContract = IERC721(sisterContractAddress);
 
-            // Transfer the NFT from the sister contract to _addrOwner
             sisterNftContract.safeTransferFrom(
                 sisterContractAddress,
                 _addrOwner,
@@ -191,41 +148,32 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
         }
 
         return (response, _addrOriginNftContract,_addrOwner,_nftId);
-            //return nft id and contract
-        
     }
 
-    // NFTContract => User => TokenId => bytes32 storageSlot
     mapping(address => mapping(address => mapping(uint => bytes32)))
         public bridgeRequest;
 
-    //@notice bridge over NFT to sister chain
+    // Bridge NFT to sister chain
     function onERC721Received(
         address operator,
         address from,
         uint256 tokenId,
         bytes calldata data
     ) public override returns (bytes4) {
-        //@TODO delete afterwards to save gas, just makes it more readable.
         address nftContractAddr = msg.sender;
 
-        //@TODO what should we use the data field for, tokenURI perhaps? Overkill possibly, or plain useless.
         bytes32 encodedData = encodeMessagePayload(
             nftContractAddr,
             from,
             tokenId
         );
 
-        //@TODO we need to work with this in the backend!
-
-        // getSignalSlot would also work, to save gas
         bridgeRequest[nftContractAddr][from][tokenId] = pingBridgeForTransfer(
             encodedData
         );
 
         heldNFT[from][nftContractAddr][tokenId] = true;
 
-        //@todo can I ignore this?
         return this.onERC721Received.selector;
     }
 
@@ -237,7 +185,7 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
         return taikoBridge.sendSignal(_dataPayload);
     }
 
-    //@notice decode data payload to bytes32 for cross-chain messaging
+    // Encode data payload to bytes32 for cross-chain messaging
     function encodeMessagePayload(
         address _addrOwner,
         address _addrOriginNftContract,
@@ -250,7 +198,7 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
         return (encoded);
     }
 
-    //@notice decode data payload from bytes32 for cross-chain messaging
+    // Decode data payload from bytes32 for cross-chain messaging
     function decodeMessagePayload(
         bytes32 encodedMessageNFTBridge
     ) public pure returns (address, address, uint256) {
@@ -264,7 +212,4 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
             );
         return (_addrOwner, _addrOriginNftContract, _nftId);
     }
-
-
-    
 }
