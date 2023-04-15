@@ -132,7 +132,6 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
     ) external returns (bool,address,address,uint) {
         taikoBridge = ITaikoBridgeContract(currentBridgeSignalContract);
 
-
       
         bool response = taikoBridge.isSignalReceived(
             srcChainId,
@@ -176,7 +175,7 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
     //requestId => storageSlot;
     mapping(uint => bytes32) public storageSlotsBridgeRequest;
 
-    mapping(uint => uint) public blockNumber;
+
     mapping(uint => address)public  bridgeRequestInitiatorUser;
 
 
@@ -209,7 +208,7 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
         );
         bridgeRequestInitiatorUser[totalRequestsSent] = from ;
         bridgeRequestInitiatorSender[totalRequestsSent] = msg.sender;
-        blockNumber[totalRequestsSent] = block.number;
+      
         totalRequestsSent++;
         heldNFT[from][nftContractAddr][tokenId] = true;
        
