@@ -69,7 +69,7 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
     uint public currentSisterChainId;
 
 
-        event bridgeRequestSent(
+    event bridgeRequestSent(
         address owner,
         address indexednftContract,
         uint indexed nftId
@@ -177,7 +177,10 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
     mapping(uint => bytes32) storageSlotsBridgeRequest;
 
     mapping(uint => uint) blockNumber;
-    mapping(uint => address) bridgeRequestInitiator;
+    mapping(uint => address) bridgeRequestInitiatorUser;
+
+
+    mapping(uint => address) bridgeRequestInitiatorSender;
     uint totalRequestsSent;
 
 
@@ -204,7 +207,8 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
         storageSlotsBridgeRequest[totalRequestsSent] = pingBridgeForTransfer(
             encodedData
         );
-        bridgeRequestInitiator[totalRequestsSent] = from ;
+        bridgeRequestInitiatorUser[totalRequestsSent] = from ;
+        bridgeRequestInitiatorSender[totalRequestSent] = msg.sender;
         blockNumber[totalRequestsSent] = block.number;
         totalRequestsSent++;
         heldNFT[from][nftContractAddr][tokenId] = true;
