@@ -180,11 +180,19 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
 
 
     mapping(uint => address) public bridgeRequestInitiatorSender;
+
+    mapping(uint => bytes32) public sentPayload;
     uint public totalRequestsSent;
 
 
 
-    
+
+
+
+    event bridgeData(
+        address indexed sender,
+        bytes32 indexed dataPayload
+    );
 
     // Bridge NFT to sister chain
     function onERC721Received(
@@ -206,6 +214,8 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
         storageSlotsBridgeRequest[totalRequestsSent] = pingBridgeForTransfer(
             encodedData
         );
+
+        sentPayload[totalRequestsSent] = encodedData;
         bridgeRequestInitiatorUser[totalRequestsSent] = from ;
         bridgeRequestInitiatorSender[totalRequestsSent] = msg.sender;
       
@@ -222,36 +232,35 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
     function pingBridgeForTransfer(
         bytes32 _dataPayload
     ) internal returns (bytes32) {
+
+        emit bridgeData(msg.sender, _dataPayload);
         taikoBridge = ITaikoBridgeContract(currentBridgeSignalContract);
 
         return taikoBridge.sendSignal(_dataPayload);
     }
 
-    // Encode data payload to bytes32 for cross-chain messaging
-    function encodeMessagePayload(
-        address _addrOwner,
-        address _addrOriginNftContract,
-        uint256 _nftId
-    ) public pure returns (bytes32) {
-        bytes32 encoded = keccak256(
-            abi.encode(_addrOwner, _addrOriginNftContract, _nftId)
-        );
+// Encode data payload to bytes32 for cross-chain messaging
+function encodeMessagePayload(
+    address _addrOwner,
+    address _addrOriginNftContract,
+    uint256 _nftId
+) public pure returns (bytes32) {
+    bytes32 encoded = bytes32(
+        (uint256(uint160(_addrOwner)) << 96) |
+        (uint256(uint160(_addrOriginNftContract)) << 32) |
+        _nftId
+    );
+    return encoded;
+}
 
-        return (encoded);
-    }
+// Decode data payload from bytes32 for cross-chain messaging
+function decodeMessagePayload(
+    bytes32 encodedMessageNFTBridge
+) public pure returns (address, address, uint256) {
+    address _addrOwner = address(uint160(uint256(encodedMessageNFTBridge) >> 96));
+    address _addrOriginNftContract = address(uint160(uint256(encodedMessageNFTBridge) << 160 >> 192));
+    uint256 _nftId = uint256(encodedMessageNFTBridge) & 0xFFFFFFFF;
+    return (_addrOwner, _addrOriginNftContract, _nftId);
+}
 
-    // Decode data payload from bytes32 for cross-chain messaging
-    function decodeMessagePayload(
-        bytes32 encodedMessageNFTBridge
-    ) public pure returns (address, address, uint256) {
-        (
-            address _addrOwner,
-            address _addrOriginNftContract,
-            uint256 _nftId
-        ) = abi.decode(
-                abi.encodePacked(encodedMessageNFTBridge),
-                (address, address, uint256)
-            );
-        return (_addrOwner, _addrOriginNftContract, _nftId);
-    }
 }
