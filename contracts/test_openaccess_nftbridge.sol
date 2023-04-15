@@ -62,18 +62,18 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
     // The bridge contract on the other side
     address public currentSisterContract;
 
+    bool sisterBridgeSetup =false;
+
     uint public currentChainId;
 
     uint public currentSisterChainId;
 
     // Constructor function for the contract
     constructor(
-        uint _chainType,
-        address _sisterContract
+        uint _chainType
     ) {
         currentChainType = _chainType;
-        currentSisterContract = _sisterContract;
-
+        
         if (_chainType == 1) {
             currentBridgeSignalContract = sepoliaBridgeContract;
 
@@ -106,6 +106,15 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
         // for non-upgradable NFT Contracts to be L2 Bridge compliant
     }
 
+    function addSisterBridgeContract(address _SisterContractInit) external onlyOwner{
+
+        //sister bridge contract can only be set up once
+        require(!sisterBridgeSetup, "A contract is a contract is a contract!");
+        sisterBridgeSetup = true;
+        currentSisterContract  = _SisterContractInit;
+
+    }
+
     // Returns true or false if message received, the original NFT Contract address from the other chain, the owner of the NFT, and the tokenId
     function claimBridged(
         uint256 srcChainId,
@@ -115,6 +124,8 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
     ) external returns (bool,address,address,uint) {
         taikoBridge = ITaikoBridgeContract(currentBridgeSignalContract);
 
+
+        require(_origin == currentSisterContract, "I have never seen this Man/BridgeContract in my life!");
         bool response = taikoBridge.isSignalReceived(
             srcChainId,
             _origin,

@@ -1,24 +1,21 @@
-import { ethers } from "hardhat";
+// Import dependencies
+const hre = require("hardhat");
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
-
-  const lockedAmount = ethers.utils.parseEther("0.001");
-
-  const Lock = await ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
-
-  await lock.deployed();
-
-  console.log(
-    `Lock with ${ethers.utils.formatEther(lockedAmount)}ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`
+  // Deploy the openAccessNFTBridge contract
+  const OpenAccessNFTBridge = await hre.ethers.getContractFactory("openAccessNFTBridge");
+  const openAccessNFTBridge = await OpenAccessNFTBridge.deploy(
+    1
+  
   );
+  await openAccessNFTBridge.deployed();
+  console.log("openAccessNFTBridge deployed to:", openAccessNFTBridge.address);
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+// Run the deploy script
+main()
+  .then(() => process.exit(0))
+  .catch(error => {
+    console.error(error);
+    process.exit(1);
+  });
