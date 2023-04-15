@@ -1,10 +1,12 @@
 const { ethers } = require('hardhat');
 
 async function main() {
-  const contractAddress = '0x0844a1Dd5314b6CE2D5580D98ec4AE4eC817B2C4'; // The address of your contract
-  const privateKey = process.env.PRIVATE_KEY; // Your private key from the .env file
-  const sisterContractAddress = '0x0844a1Dd5314b6CE2D5580D98ec4AE4eC817B2C4'; // The address of the sister bridge contract
 
+    
+  const contractAddress = '0x148cff8FD012eefB61128d3fFa23CFA744E63163'; // The address of your contract
+  const privateKey = process.env.PRIVATE_KEY; // Your private key from the .env file
+  const sisterContractAddress = '0x9bF56347Cf15e37A0b85Dc269b65D2b10399be96'; // The address of the sister bridge contract
+  
   // Set up the signer with your private key connected to the provider from the Hardhat config
   const signer = new ethers.Wallet(privateKey, ethers.provider);
 
