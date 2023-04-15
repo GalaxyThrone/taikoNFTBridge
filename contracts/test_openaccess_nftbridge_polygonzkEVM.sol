@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MIT
+
+/*
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -8,21 +10,29 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-interface ITaikoBridgeContract {
-    function sendSignal(bytes32 signal) external returns (bytes32 storageSlot);
+interface IPolygonBridgeContract {
+   function bridgeMessage(
+        uint32 destinationNetwork,
+        address destinationAddress,
+        bool forceUpdateGlobalExitRoot,
+        bytes calldata metadata
+    ) external payable;
 
-    function getSignalSlot(
-        address app,
-        bytes32 signal
-    ) external returns (bytes32);
-
-    function isSignalReceived(
-        uint256 srcChainId,
-        address app,
-        bytes32 signal,
-        bytes calldata proof
-    ) external returns (bool);
+    function claimMessage(
+        bytes32[32] calldata smtProof,
+        uint32 index,
+        bytes32 mainnetExitRoot,
+        bytes32 rollupExitRoot,
+        uint32 originNetwork,
+        address originAddress,
+        uint32 destinationNetwork,
+        address destinationAddress,
+        uint256 amount,
+        bytes calldata metadata
+    ) external;
 }
+
+
 
 // Abstract contract, add appropriate functionality later
 abstract contract WrappedNFT {
@@ -39,21 +49,26 @@ abstract contract WrappedNFT {
 contract openAccessNFTBridge is Ownable, IERC721Receiver {
     using Counters for Counters.Counter;
 
-    ITaikoBridgeContract taikoBridge;
+    IPolygonBridgeContract polygonBridge;
 
     // Use different starting points for each chain to prevent overlap
     Counters.Counter private _tokenIdCounter;
 
     // Define bridge and chain contracts and IDs
-    address public taikoBridgeContract =
-        	address(0x0000777700000000000000000000000000000007); // SignalService Taiko
+    address public polygonzkEVMBridgeContractL1 =
+        	address(0xF6BEEeBB578e214CA9E23B0e9683454Ff88Ed2A7); // MessageService PolygonzkEVM
 
-    address public sepoliaBridgeContract =
-        address(0x11013a48Ad87a528D23CdA25D2C34D7dbDA6b46b); // SignalService Sepolia
+    address public polygonzkEVMBridgeContractL2 =
+        	address(0xF6BEEeBB578e214CA9E23B0e9683454Ff88Ed2A7); // MessageService PolygonzkEVM
 
-    uint public sepoliaChainId = 11155111; //ChainID Sepolia
+    
 
-    uint public taikoChainId = 167002; //ChainID Taiko A2
+    address public ethereumGoerliBridgeContract =
+        address(0x11013a48Ad87a528D23CdA25D2C34D7dbDA6b46b); // MessageService GoerliEth
+
+    uint public goerliChainId = 5; //ChainID Sepolia
+
+    uint public polygonChainIdZK = 1442; //ChainID polygon zkEVM  Testnet
 
     uint public currentChainType = 0; // 1 for L1, 2 for L2
 
@@ -82,17 +97,17 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
         currentChainType = _chainType;
         
         if (_chainType == 1) {
-            currentBridgeSignalContract = sepoliaBridgeContract;
+            currentBridgeSignalContract = polygonzkEVMBridgeContractL1;
 
-            currentChainId = sepoliaChainId;
-            currentSisterChainId = taikoChainId;
+            currentChainId = goerliChainId;
+            currentSisterChainId = polygonChainIdZK;
         }
 
         if (_chainType == 2) {
-            currentBridgeSignalContract = taikoBridgeContract;
+            currentBridgeSignalContract = polygonzkEVMBridgeContractL2;
 
-            currentChainId = taikoChainId;
-            currentSisterChainId = sepoliaChainId;
+            currentChainId = polygonChainIdZK;
+            currentSisterChainId = goerliChainId;
         }
     }
 
@@ -130,10 +145,10 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
         bytes32 _dataPayload,
         bytes calldata proof
     ) external returns (bool,address,address,uint) {
-        taikoBridge = ITaikoBridgeContract(currentBridgeSignalContract);
+        polygonBridge = IPolygonBridgeContract(currentBridgeSignalContract);
 
       
-        bool response = taikoBridge.isSignalReceived(
+        bool response = polygonBridge.claimMessage(
             srcChainId,
             _origin,
             _dataPayload,
@@ -224,19 +239,27 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
        
 
         emit bridgeRequestSent(from, msg.sender, tokenId);
-        
+
     
         return this.onERC721Received.selector;
     }
 
     function pingBridgeForTransfer(
         bytes32 _dataPayload
-    ) internal returns (bytes32) {
+    ) internal {
 
         emit bridgeData(msg.sender, _dataPayload);
-        taikoBridge = ITaikoBridgeContract(currentBridgeSignalContract);
+        polygonBridge = IPolygonBridgeContract(currentBridgeSignalContract);
 
-        return taikoBridge.sendSignal(_dataPayload);
+    function bridgeMessage(
+        uint32 destinationNetwork,
+        address destinationAddress,
+        bool forceUpdateGlobalExitRoot,
+        bytes calldata metadata
+    ) external payable;
+
+
+       
     }
 
 // Encode data payload to bytes32 for cross-chain messaging
@@ -264,3 +287,6 @@ function decodeMessagePayload(
 }
 
 }
+
+*/
+
