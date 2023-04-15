@@ -46,14 +46,14 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
 
     // Define bridge and chain contracts and IDs
     address public taikoBridgeContract =
-        0xbB203a6f73F805E44E97dcC0c894eFe0fAf72498; // SignalService Taiko
+        	address(0x0000777700000000000000000000000000000007); // SignalService Taiko
 
     address public sepoliaBridgeContract =
-        address(0x07130410064Ab5C32486CC36904fb219ae97156F); // SignalService Sepolia
+        address(0x11013a48Ad87a528D23CdA25D2C34D7dbDA6b46b); // SignalService Sepolia
 
     uint public sepoliaChainId = 11155111; //ChainID Sepolia
 
-    uint public taikoChainId = 167004; //ChainID Taiko A2
+    uint public taikoChainId = 167002; //ChainID Taiko A2
 
     uint public currentChainType = 0; // 1 for L1, 2 for L2
 
