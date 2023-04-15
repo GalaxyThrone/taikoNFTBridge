@@ -208,7 +208,7 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
             encodedData
         );
         bridgeRequestInitiatorUser[totalRequestsSent] = from ;
-        bridgeRequestInitiatorSender[totalRequestSent] = msg.sender;
+        bridgeRequestInitiatorSender[totalRequestsSent] = msg.sender;
         blockNumber[totalRequestsSent] = block.number;
         totalRequestsSent++;
         heldNFT[from][nftContractAddr][tokenId] = true;
