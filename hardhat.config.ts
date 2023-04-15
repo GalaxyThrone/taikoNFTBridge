@@ -15,9 +15,8 @@ const networks = {
     url: "https://l2rpc.hackathon.taiko.xyz",
     accounts: [process.env.PRIVATE_KEY],
   },
-
   sepolia: {
-    url: "https://rpc.sepolia.dev",
+    url: "https://rpc.sepolia.org",
     accounts: [process.env.PRIVATE_KEY],
   },
 };
