@@ -133,7 +133,7 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
         taikoBridge = ITaikoBridgeContract(currentBridgeSignalContract);
 
 
-        require(_origin == currentSisterContract, "I have never seen this Man/BridgeContract in my life!");
+      
         bool response = taikoBridge.isSignalReceived(
             srcChainId,
             _origin,
