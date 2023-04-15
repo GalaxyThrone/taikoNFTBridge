@@ -104,6 +104,29 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
 
     // done.
 
+       constructor(
+        uint _chainType,
+        address _sisterContract
+    ) {
+        currentChainType = _chainType;
+        currentSisterContract = _sisterContract;
+
+        if (_chainType == 1) {
+            currentBridgeSignalContract = sepoliaBridgeContract;
+
+            currentChainId = sepoliaChainId;
+            currentSisterChainId = taikoChainId;
+        }
+
+        if (_chainType == 2) {
+            currentBridgeSignalContract = sepoliaBridgeContract;
+
+            currentChainId = taikoChainId;
+            currentSisterChainId = sepoliaChainId;
+        }
+    }
+
+
     //ownerWhoSentTheNFT => NFT Contract => tokenId => Boolean (true if its being held)
     mapping(address => mapping(address => mapping(uint => bool))) heldNFT;
 
@@ -166,6 +189,8 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
 
             return (response, address(0),address(0),0);
         }
+
+        return (response, _addrOriginNftContract,_addrOwner,_nftId);
             //return nft id and contract
         
     }
