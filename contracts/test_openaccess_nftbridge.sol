@@ -28,13 +28,13 @@ interface ITaikoBridgeContract {
 abstract contract WrappedNFT{
 
 
-    function claimBridged(uint256 srcChainId,
+     function claimBridged(uint256 srcChainId,
         address app,
         bytes32 signal,
         bytes calldata proof
-    ) external returns (bool);
+    ) public virtual returns (bool,address,address,uint);
 
-    function addSisterContract(address _newSisterContractOnOtherChain);
+    function addSisterContract(address _newSisterContractOnOtherChain)public  virtual;
 
 
 
@@ -152,6 +152,9 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
             ];
 
             // Create an instance of the ERC721 contract
+
+            require(sisterContractAddress != address(0), "no sister contract specified!");
+
             IERC721 sisterNftContract = IERC721(sisterContractAddress);
 
             // Transfer the NFT from the sister contract to _addrOwner
