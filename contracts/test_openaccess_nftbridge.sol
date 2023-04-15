@@ -68,6 +68,13 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
 
     uint public currentSisterChainId;
 
+
+        event bridgeRequestSent(
+        address owner,
+        address indexednftContract,
+        uint indexed nftId
+    );
+
     // Constructor function for the contract
     constructor(
         uint _chainType
@@ -93,6 +100,7 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
     mapping(address => mapping(address => mapping(uint => bool))) heldNFT;
 
     mapping(address => address) public sisterContract;
+
 
     // Add a new sister contract
     function addSisterContract(address _newSisterContract) external {
@@ -161,8 +169,20 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
         return (response, _addrOriginNftContract,_addrOwner,_nftId);
     }
 
-    mapping(address => mapping(address => mapping(uint => bytes32)))
-        public bridgeRequest;
+
+       
+
+
+    //requestId => storageSlot;
+    mapping(uint => bytes32) storageSlotsBridgeRequest;
+
+    mapping(uint => uint) blockNumber;
+    mapping(uint => address) bridgeRequestInitiator;
+    uint totalRequestsSent;
+
+
+
+    
 
     // Bridge NFT to sister chain
     function onERC721Received(
@@ -179,12 +199,20 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
             tokenId
         );
 
-        bridgeRequest[nftContractAddr][from][tokenId] = pingBridgeForTransfer(
+     
+        
+        storageSlotsBridgeRequest[totalRequestsSent] = pingBridgeForTransfer(
             encodedData
         );
-
+        bridgeRequestInitiator[totalRequestsSent] = from ;
+        blockNumber[totalRequestsSent] = block.number;
+        totalRequestsSent++;
         heldNFT[from][nftContractAddr][tokenId] = true;
+       
 
+        emit bridgeRequestSent(from, msg.sender, tokenId);
+
+    
         return this.onERC721Received.selector;
     }
 
