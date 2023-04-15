@@ -24,6 +24,24 @@ interface ITaikoBridgeContract {
     ) external returns (bool);
 }
 
+//@abstract contract @TODO
+abstract contract WrappedNFT{
+
+
+    function claimBridged(uint256 srcChainId,
+        address app,
+        bytes32 signal,
+        bytes calldata proof
+    ) external returns (bool);
+
+    function addSisterContract(address _newSisterContractOnOtherChain);
+
+
+
+    
+
+
+}
 contract openAccessNFTBridge is Ownable, IERC721Receiver {
     using Counters for Counters.Counter;
 
@@ -55,7 +73,6 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
 
     uint public currentSisterChainId;
 
-  
     //@TODO (bad notes, deprecated. Wrote down the new approach)
 
     //@notice
@@ -87,33 +104,72 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
 
     // done.
 
-
-
-
-
-
     //ownerWhoSentTheNFT => NFT Contract => tokenId => Boolean (true if its being held)
     mapping(address => mapping(address => mapping(uint => bool))) heldNFT;
 
-
-    mapping(address => address ) public sisterContract;
+    mapping(address => address) public sisterContract;
 
     function addSisterContract(address _newSisterContract) external {
-
         sisterContract[msg.sender] = _newSisterContract;
     }
 
-
-    function claimBridged(bytes32 _dataPayload, bytes32 _signal) external returns(bool){
-
-
+    function addSisterContractViaSignature(address _newSisterContract, bytes memory _signature) external{
+        //@TODO for non upgradable NFT Contracts to be able to be L2 Bridge compliant
     }
 
 
+    //@notice returns true or false if message received, the OG NFT Contract addr from the other chain,the owner of the NFT, the tokenId.
+    function claimBridged(
+        uint256 srcChainId,
+        address _origin,
+        bytes32 _dataPayload,
+        bytes calldata proof
+    ) external returns (bool,address,address,uint) {
+        taikoBridge = ITaikoBridgeContract(currentBridgeSignalContract);
+
+        bool response = taikoBridge.isSignalReceived(
+            srcChainId,
+            _origin,
+            _dataPayload,
+            proof
+        );
+
+        (
+            address _addrOwner,
+            address _addrOriginNftContract,
+            uint256 _nftId
+        ) = decodeMessagePayload(_dataPayload);
+
+        //if we hold the NFT from a previous bridging, we give it back to the owner here.
+
+        // this requires the NFT Contract Owner to add the sisterContract to the mapping.
+        if (
+            heldNFT[_addrOwner][sisterContract[_addrOriginNftContract]][_nftId]
+        ) {
+            // Get the address of the sister contract
+            address sisterContractAddress = sisterContract[
+                _addrOriginNftContract
+            ];
+
+            // Create an instance of the ERC721 contract
+            IERC721 sisterNftContract = IERC721(sisterContractAddress);
+
+            // Transfer the NFT from the sister contract to _addrOwner
+            sisterNftContract.safeTransferFrom(
+                sisterContractAddress,
+                _addrOwner,
+                _nftId
+            );
+
+            return (response, address(0),address(0),0);
+        }
+            //return nft id and contract
+        
+    }
 
     // NFTContract => User => TokenId => bytes32 storageSlot
-    mapping(address => mapping(address => mapping(uint => bytes32))) public bridgeRequest;
-       
+    mapping(address => mapping(address => mapping(uint => bytes32)))
+        public bridgeRequest;
 
     //@notice bridge over NFT to sister chain
     function onERC721Received(
@@ -124,9 +180,6 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
     ) public override returns (bytes4) {
         //@TODO delete afterwards to save gas, just makes it more readable.
         address nftContractAddr = msg.sender;
-
- 
-
 
         //@TODO what should we use the data field for, tokenURI perhaps? Overkill possibly, or plain useless.
         bytes32 encodedData = encodeMessagePayload(
@@ -141,6 +194,8 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
         bridgeRequest[nftContractAddr][from][tokenId] = pingBridgeForTransfer(
             encodedData
         );
+
+        heldNFT[from][nftContractAddr][tokenId] = true;
 
         //@todo can I ignore this?
         return this.onERC721Received.selector;
@@ -181,4 +236,7 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
             );
         return (_addrOwner, _addrOriginNftContract, _nftId);
     }
+
+
+    
 }
