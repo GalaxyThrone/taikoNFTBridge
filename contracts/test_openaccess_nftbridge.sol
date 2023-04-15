@@ -125,7 +125,7 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
         //@TODO delete afterwards to save gas, just makes it more readable.
         address nftContractAddr = msg.sender;
 
-        uint256 tokenId = tokenId;
+ 
 
 
         //@TODO what should we use the data field for, tokenURI perhaps? Overkill possibly, or plain useless.
