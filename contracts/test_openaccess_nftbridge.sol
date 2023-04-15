@@ -59,7 +59,7 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
 
     address public currentBridgeSignalContract;
 
-    // The bridge contract on the other side
+    // The bridge contract on the other side. Actually useless atm.
     address public currentSisterContract;
 
     bool sisterBridgeSetup =false;
