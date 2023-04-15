@@ -55,9 +55,7 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
 
     uint public currentSisterChainId;
 
-    //ownerWhoSentTheNFT => NFT Contract => tokenId => Boolean (true if its being held)
-    mapping(address => mapping(address => mapping(uint => bool))) heldNFT;
-
+  
     //@TODO (bad notes, deprecated. Wrote down the new approach)
 
     //@notice
@@ -89,9 +87,33 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
 
     // done.
 
+
+
+
+
+
+    //ownerWhoSentTheNFT => NFT Contract => tokenId => Boolean (true if its being held)
+    mapping(address => mapping(address => mapping(uint => bool))) heldNFT;
+
+
+    mapping(address => address ) public sisterContract;
+
+    function addSisterContract(address _newSisterContract) external {
+
+        sisterContract[msg.sender] = _newSisterContract;
+    }
+
+
+    function claimBridged(bytes32 _dataPayload, bytes32 _signal) external returns(bool){
+
+
+    }
+
+
+
     // NFTContract => User => TokenId => bytes32 storageSlot
-    mapping(address => mapping(address => mapping(uint => bytes32)))
-        public bridgeRequest;
+    mapping(address => mapping(address => mapping(uint => bytes32))) public bridgeRequest;
+       
 
     //@notice bridge over NFT to sister chain
     function onERC721Received(
@@ -105,6 +127,8 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
 
         uint256 tokenId = tokenId;
 
+
+        //@TODO what should we use the data field for, tokenURI perhaps? Overkill possibly, or plain useless.
         bytes32 encodedData = encodeMessagePayload(
             nftContractAddr,
             from,
@@ -112,6 +136,8 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
         );
 
         //@TODO we need to work with this in the backend!
+
+        // getSignalSlot would also work, to save gas
         bridgeRequest[nftContractAddr][from][tokenId] = pingBridgeForTransfer(
             encodedData
         );
