@@ -38,9 +38,12 @@ abstract contract WrappedNFT {
     ) public virtual;
 }
 
-// Contract for open access NFT bridge [WIP]
+// Contract for a native NFT Support Bridge with equivalent NFT address
 
-// deploys wrapped nft contracts on the other chain
+// @notice this contract  only supports NFT Contracts with the same nft contract address (either via CREATE + same nonce OR CREATE2).
+
+// @notice for a simpler Bridge  that doesnt require any changes for existing NFT Contracts, use our openaccess_NftBridge
+
 contract openAccessNFTBridge is Ownable, IERC721Receiver {
     using Counters for Counters.Counter;
 
@@ -73,14 +76,6 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
 
     uint public currentSisterChainId;
 
-    struct TokenInformation {
-        uint originNetwork;
-        address originTokenAddress;
-    }
-
-    // Wrapped token Address --> Origin token information
-    mapping(address => TokenInformation) public wrappedTokenToTokenInfo;
-
     event bridgeRequestSent(
         address owner,
         address indexednftContract,
@@ -110,20 +105,6 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
     mapping(address => mapping(uint => bool)) heldNFT;
 
     mapping(address => address) public sisterContract;
-
-    // Add a new sister contract
-    function addSisterContract(address _newSisterContract) external {
-        sisterContract[msg.sender] = _newSisterContract;
-    }
-
-    // Add a sister contract via signature
-    function addSisterContractViaSignature(
-        address _newSisterContract,
-        bytes memory _signature
-    ) external {
-        // TODO
-        // for non-upgradable NFT Contracts to be L2 Bridge compliant
-    }
 
     function addSisterBridgeContract(
         address _SisterContractInit
@@ -180,7 +161,8 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
         return this.onERC721Received.selector;
     }
 
-    // Returns true or false if message received, the original NFT Contract address from the other chain, the owner of the NFT, and the tokenId
+    //@notice s
+    //@notice Returns true or false if message received, the original NFT Contract address from the other chain, the owner of the NFT, and the tokenId
     function claimBridged(
         uint256 srcChainId,
         address _origin,
@@ -208,32 +190,20 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
         ) = decodeMessagePayload(_dataPayload);
 
         // If we hold the NFT from a previous bridging, we return it to the owner here.
-        //@notice this path requires native NFT Contract support.
-        //@notice namely, the sisterContract has to be set up.
-        if (heldNFT[sisterContract[_addrOriginNftContract]][_nftId]) {
-            address sisterContractAddress = sisterContract[
-                _addrOriginNftContract
-            ];
-
-            require(
-                sisterContractAddress != address(0),
-                "no sister contract specified!"
-            );
-
-            IERC721 sisterNftContract = IERC721(sisterContractAddress);
+        if (heldNFT[_addrOriginNftContract][_nftId]) {
+            IERC721 sisterNftContract = IERC721(_addrOriginNftContract);
 
             sisterNftContract.safeTransferFrom(
-                sisterContractAddress,
+                _addrOriginNftContract,
                 _addrOwner,
                 _nftId
             );
-            //give back empty data.
+
+            //give back empty data to signal sucessful transfer from previously holding the nft
             return (response, address(0), address(0), 0);
         }
-        //@notice deploy wrappedNFT Token
-        else {}
 
-        //data to be used for the native NFT Contract Specified Sister.
+        //data to be used for the native NFT Contract Sister for its own minting.
         return (response, _addrOriginNftContract, _addrOwner, _nftId);
     }
 
