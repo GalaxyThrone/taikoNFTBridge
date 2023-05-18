@@ -67,7 +67,7 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
 
     address public currentBridgeSignalContract;
 
-    // The bridge contract on the other side. Actually useless atm.
+    //@TODO use create2 to have same contract address on both chains instead.
     address public currentSisterContract;
 
     bool sisterBridgeSetup = false;

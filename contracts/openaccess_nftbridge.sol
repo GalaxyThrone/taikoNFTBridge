@@ -64,7 +64,7 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
 
     address public currentBridgeSignalContract;
 
-    // The bridge contract on the other side. Actually useless atm.
+    //@TODO use create2 to have same contract address on both chains instead.
     address public currentSisterContract;
 
     bool sisterBridgeSetup = false;
@@ -108,13 +108,6 @@ contract openAccessNFTBridge is Ownable, IERC721Receiver {
 
     // Mapping to store NFTs being held
     mapping(address => mapping(uint => bool)) heldNFT;
-
-    mapping(address => address) public sisterContract;
-
-    // Add a new sister contract
-    function addSisterContract(address _newSisterContract) external {
-        sisterContract[msg.sender] = _newSisterContract;
-    }
 
     // Add a sister contract via signature
     function addSisterContractViaSignature(
