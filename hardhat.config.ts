@@ -7,6 +7,8 @@ require("dotenv").config();
 // Define the networks
 const networks = {
   hardhat: {},
+
+  /*
   rinkeby: {
     url: `https://rinkeby.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
     accounts: [process.env.PRIVATE_KEY],
@@ -19,6 +21,7 @@ const networks = {
     url: "https://rpc.sepolia.org",
     accounts: [process.env.PRIVATE_KEY],
   },
+  */
 };
 
 // Define the solidity compiler version
